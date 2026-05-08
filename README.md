@@ -1,6 +1,6 @@
 # Wildcats Sud — Livre de Jeu Offensif 2025
 
-Application React + Vite pour gérer et afficher le livre de jeu offensif des Wildcats Sud.
+Application React + Vite pour gérer et afficher le livre de jeu offensif des Wildcats Sud. test
 
 ## Démarrage rapide
 
