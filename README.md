@@ -85,7 +85,7 @@ const CORRECT_PASSWORD = 'wildcats2025'  // ← changer ici
 
 ## Déployer sur GitHub Pages
 
-1. Crée un repo GitHub nommé `wildcats-playbook`
+1. Crée un repo GitHub nommé `wildcats-ouest-playbook-2025`
 2. Installe le plugin de déploiement:
    ```bash
    npm install --save-dev gh-pages
@@ -94,7 +94,7 @@ const CORRECT_PASSWORD = 'wildcats2025'  // ← changer ici
    ```json
    "deploy": "gh-pages -d dist"
    ```
-4. Vérifie que `vite.config.js` a `base: '/wildcats-playbook/'`
+4. Vérifie que `vite.config.js` a `base: '/wildcats-ouest-playbook-2025/'`
 5. Déploie:
    ```bash
    npm run build
@@ -102,7 +102,7 @@ const CORRECT_PASSWORD = 'wildcats2025'  // ← changer ici
    ```
 6. Active GitHub Pages dans les settings du repo (branch: `gh-pages`)
 
-Ton livre de jeu sera accessible à: `https://[ton-username].github.io/wildcats-playbook/`
+Ton livre de jeu sera accessible à: `https://jefffffethier.github.io/wildcats-ouest-playbook-2025/`
 
 ## Imprimer en PDF
 
