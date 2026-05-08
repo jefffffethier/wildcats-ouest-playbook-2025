@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/wildcats-playbook/',
+  base: '/wildcats-ouest-playbook-2025/',
 })
