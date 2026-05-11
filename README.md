@@ -76,7 +76,92 @@ Ouvre `src/data/plays.js` et ajoute un objet au tableau. Voici la structure:
 }
 ```
 
-## Changer le mot de passe
+## Éditeur de jeux (accès entraîneur)
+
+L'éditeur permet de créer et modifier des jeux directement dans le navigateur, sans toucher au code source.
+
+### Accès
+
+1. Connectez-vous au livre de jeu avec le mot de passe habituel.
+2. Dans la barre latérale, sous **NAVIGATION**, cliquez sur **Éditeur**.
+3. Un second écran de mot de passe apparaît. Entrez le mot de passe éditeur :
+
+   ```
+   wildcats-edit-2025
+   ```
+
+   La session est mémorisée dans le navigateur — vous n'aurez pas à le ressaisir tant que vous restez sur le même navigateur.
+
+### Interface — 3 zones
+
+```
+┌─────────────┬──────────────────────────┬──────────────────┐
+│  Liste des  │      Diagramme du jeu     │  Détails du jeu  │
+│    jeux     │        (Canvas)           │  (Formulaire)    │
+│  (240 px)   │       (flex center)       │    (320 px)      │
+└─────────────┴──────────────────────────┴──────────────────┘
+```
+
+**Barre d'outils (haut)** : boutons **Exporter** et **Importer** à gauche, bouton **← Livre de Jeu** à droite.
+
+### Liste des jeux (colonne gauche)
+
+| Action | Comment |
+|---|---|
+| **Créer** | Cliquez **+ Nouveau Jeu** — un jeu vide est créé et sélectionné. |
+| **Sélectionner** | Cliquez sur le nom d'un jeu. |
+| **Réordonner** | Boutons **↑** et **↓** à droite de chaque rangée. |
+| **Dupliquer** | Bouton **⧉** — une copie est créée et sélectionnée. |
+| **Supprimer** | Bouton **×** — confirmation demandée avant suppression. |
+
+### Formulaire (colonne droite)
+
+| Champ | Comportement |
+|---|---|
+| **Nom** | Sauvegarde au clic hors du champ. |
+| **Type** | Passe / Course — sauvegarde immédiate. |
+| **Snap** | Down / Sur 2 — sauvegarde immédiate. |
+| **Formation** | Sauvegarde au clic hors du champ. |
+| **Assignations** | Éditeur de texte riche par position (QB, RB, SB, WR_L/R/M, C, LG, RG, LT, RT, TE_L/R). Sauvegarde au clic hors de l'éditeur. |
+
+### Canvas — Édition interactive (colonne centrale)
+
+La barre de modes au-dessus du diagramme contrôle l'interaction :
+
+**Normal** — lecture seule.
+
+**Déplacer joueur** — des contours blancs apparaissent autour de chaque joueur. Cliquez-glissez un joueur directement sur le diagramme pour le repositionner.
+
+**Route (passe)** — tous les joueurs s'illuminent en orange.
+1. Cliquez un joueur pour le sélectionner comme point de départ de sa route.
+2. Cliquez sur le terrain pour ajouter des points de passage.
+3. Cliquez **Terminer ✓** pour sauvegarder.
+4. Les routes existantes s'affichent sous le diagramme avec un bouton × pour supprimer.
+
+**Chemin de course** — dessin en deux clics.
+1. Premier clic sur le terrain = point de départ du porteur (marqueur orange).
+2. Deuxième clic = destination. Sauvegardé automatiquement.
+3. Le chemin existant s'affiche sous le diagramme avec un bouton × pour supprimer.
+
+**Joueurs actifs** (section en bas du canvas) — cochez/décochez chaque position pour l'afficher ou la masquer dans le diagramme.
+
+> Toutes les modifications sont sauvegardées automatiquement dans le navigateur (localStorage). Aucun bouton "Sauvegarder" n'est nécessaire.
+
+### Exporter / Importer
+
+- **Exporter** : télécharge le livre de jeu complet en fichier `wildcats-playbook.json`.
+- **Importer** : sélectionnez un fichier `.json` exporté précédemment. **L'import écrase toutes les données existantes** — une confirmation est demandée.
+
+### Changer le mot de passe éditeur
+
+Dans `src/components/EditorPasswordGate.jsx`, ligne 3 :
+```js
+const EDITOR_PASSWORD = 'wildcats-edit-2025'  // ← changer ici
+```
+
+---
+
+## Changer le mot de passe (vue joueurs)
 
 Dans `src/components/PasswordGate.jsx`, ligne 3:
 ```js
