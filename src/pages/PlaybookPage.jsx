@@ -2,7 +2,7 @@ import { useState } from 'react'
 import PlayCard from '../components/PlayCard.jsx'
 import plays from '../data/plays.js'
 
-export default function PlaybookPage({ onLock }) {
+export default function PlaybookPage({ onLock, onNavigate }) {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [activePlay, setActivePlay] = useState(null)
@@ -35,6 +35,15 @@ export default function PlaybookPage({ onLock }) {
             <div style={styles.teamName}>WILDCATS SUD</div>
             <div style={styles.season}>Moustique 2025</div>
           </div>
+        </div>
+
+        <div style={styles.divider} />
+
+        <div style={styles.filterSection}>
+          <div style={styles.filterLabel}>NAVIGATION</div>
+          <button style={styles.filterBtn} onClick={() => onNavigate && onNavigate('editor')}>
+            Éditeur
+          </button>
         </div>
 
         <div style={styles.divider} />

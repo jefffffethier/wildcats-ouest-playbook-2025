@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import PasswordGate from './components/PasswordGate.jsx'
+import EditorPasswordGate from './components/EditorPasswordGate.jsx'
 import PlaybookPage from './pages/PlaybookPage.jsx'
+import EditorPage from './pages/EditorPage.jsx'
 
 export default function App() {
   const [unlocked, setUnlocked] = useState(false)
+  const [page, setPage] = useState('playbook')
 
   useEffect(() => {
     if (localStorage.getItem('wc_auth') === '1') {
@@ -20,5 +23,13 @@ export default function App() {
     return <PasswordGate onUnlock={() => setUnlocked(true)} />
   }
 
-  return <PlaybookPage onLock={handleLock} />
+  if (page === 'editor') {
+    return (
+      <EditorPasswordGate>
+        <EditorPage onNavigate={setPage} />
+      </EditorPasswordGate>
+    )
+  }
+
+  return <PlaybookPage onLock={handleLock} onNavigate={setPage} />
 }
