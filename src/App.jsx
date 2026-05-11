@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import PasswordGate from './components/PasswordGate.jsx'
+import EditorPasswordGate from './components/EditorPasswordGate.jsx'
 import PlaybookPage from './pages/PlaybookPage.jsx'
 import OLinePage from './pages/OLinePage.jsx'
+import EditorPage from './pages/EditorPage.jsx'
 
 export default function App() {
   const [unlocked, setUnlocked] = useState(false)
@@ -20,7 +22,15 @@ export default function App() {
     return <PasswordGate onUnlock={() => setUnlocked(true)} />
   }
 
+  if (page === 'editor') {
+    return (
+      <EditorPasswordGate>
+        <EditorPage onNavigate={setPage} />
+      </EditorPasswordGate>
+    )
+  }
+
   return page === 'oline'
-    ? <OLinePage    onLock={handleLock} onNavigate={setPage} />
+    ? <OLinePage onLock={handleLock} onNavigate={setPage} />
     : <PlaybookPage onLock={handleLock} onNavigate={setPage} />
 }

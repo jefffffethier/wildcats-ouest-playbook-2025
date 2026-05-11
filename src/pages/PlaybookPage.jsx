@@ -47,6 +47,9 @@ export default function PlaybookPage({ onLock, onNavigate }) {
           <button style={styles.filterBtn} onClick={() => onNavigate('oline')}>
             Ligne Offensive
           </button>
+          <button style={styles.filterBtn} onClick={() => onNavigate('editor')}>
+            Éditeur
+          </button>
         </div>
 
         <div style={styles.divider} />
