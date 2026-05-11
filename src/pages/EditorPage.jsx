@@ -1,8 +1,18 @@
+import { useState } from 'react'
+import PlayListSidebar from '../components/editor/PlayListSidebar.jsx'
+import PlayCanvas from '../components/editor/PlayCanvas.jsx'
+import PlayFormPanel from '../components/editor/PlayFormPanel.jsx'
+import ExportImportControls from '../components/editor/ExportImportControls.jsx'
+
 export default function EditorPage({ onNavigate }) {
+  const [selectedId, setSelectedId] = useState(null)
+
   return (
     <div style={styles.editorRoot}>
       <div style={styles.toolbar}>
-        <div id="editor-toolbar-export" />
+        <div id="editor-toolbar-export">
+          <ExportImportControls />
+        </div>
         <button
           style={styles.backBtn}
           onClick={() => onNavigate('playbook')}
@@ -12,13 +22,13 @@ export default function EditorPage({ onNavigate }) {
       </div>
       <div style={styles.editorBody}>
         <div id="editor-sidebar" style={styles.sidebar}>
-          {/* PlayListSidebar will render here */}
+          <PlayListSidebar selectedId={selectedId} onSelect={setSelectedId} />
         </div>
         <div id="editor-canvas" style={styles.canvas}>
-          {/* PlayCanvas will render here */}
+          <PlayCanvas selectedId={selectedId} />
         </div>
         <div id="editor-panel" style={styles.panel}>
-          {/* PlayFormPanel will render here */}
+          <PlayFormPanel selectedId={selectedId} />
         </div>
       </div>
     </div>
