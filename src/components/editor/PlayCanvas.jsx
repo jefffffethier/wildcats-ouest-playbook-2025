@@ -34,6 +34,7 @@ const MODE_LABELS = {
   select: 'Normal',
   drag:   'Déplacer joueur',
   route:  'Route (passe)',
+  motion: 'Mouvement pré-snap',
   run:    'Chemin de course',
 }
 
@@ -50,12 +51,13 @@ function eventToPercent(e, svgEl) {
 }
 
 export default function PlayCanvas({ selectedId }) {
-  const [play, setPlay]       = useState(null)
-  const [mode, setMode]       = useState('select')
-  const [dragKey, setDragKey] = useState(null)
-  const [route, setRoute]     = useState(null)  // { player, path:[{x,y}...] }
-  const [runFrom, setRunFrom] = useState(null)  // {x,y} while waiting for 2nd click
-  const overlayRef            = useRef(null)
+  const [play, setPlay]         = useState(null)
+  const [mode, setMode]         = useState('select')
+  const [dragKey, setDragKey]   = useState(null)
+  const [route, setRoute]       = useState(null)   // { player, path:[{x,y}...] }
+  const [motion, setMotion]     = useState(null)   // { player, path:[{x,y}...] }
+  const [runFrom, setRunFrom]   = useState(null)   // {x,y} while waiting for 2nd click
+  const overlayRef              = useRef(null)
 
   useEffect(() => {
     if (!selectedId) { setPlay(null); return }
@@ -66,7 +68,7 @@ export default function PlayCanvas({ selectedId }) {
 
   // Reset interaction state when the selected play changes
   useEffect(() => {
-    setMode('select'); setDragKey(null); setRoute(null); setRunFrom(null)
+    setMode('select'); setDragKey(null); setRoute(null); setMotion(null); setRunFrom(null)
   }, [selectedId])
 
   if (!selectedId || !play) {
@@ -92,7 +94,7 @@ export default function PlayCanvas({ selectedId }) {
   // ── Mode switch ────────────────────────────────────────────────────────────
 
   function switchMode(m) {
-    setMode(m); setDragKey(null); setRoute(null); setRunFrom(null)
+    setMode(m); setDragKey(null); setRoute(null); setMotion(null); setRunFrom(null)
   }
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
@@ -147,6 +149,36 @@ export default function PlayCanvas({ selectedId }) {
     })
   }
 
+  // ── Motion handlers ───────────────────────────────────────────────────────
+
+  function startMotion(e, key) {
+    e.stopPropagation()
+    if (motion) return
+    const pos = positions[key] || DEFAULT_POS[key] || { x: 50, y: 50 }
+    setMotion({ player: key, path: [{ x: pos.x, y: pos.y }] })
+  }
+
+  function addMotionWaypoint(e) {
+    if (!motion || !overlayRef.current) return
+    const pt = eventToPercent(e, overlayRef.current)
+    setMotion(m => ({ ...m, path: [...m.path, pt] }))
+  }
+
+  function finalizeMotion() {
+    if (!motion || motion.path.length < 2) { setMotion(null); return }
+    const others = (play.motions || []).filter(m => m.player !== motion.player)
+    updatePlay(play.id, {
+      motions: [...others, { player: motion.player, path: motion.path, type: 'motion' }],
+    })
+    setMotion(null)
+  }
+
+  function removeMotion(playerKey) {
+    updatePlay(play.id, {
+      motions: (play.motions || []).filter(m => m.player !== playerKey),
+    })
+  }
+
   // ── Run path handlers ──────────────────────────────────────────────────────
 
   function onRunClick(e) {
@@ -178,13 +210,15 @@ export default function PlayCanvas({ selectedId }) {
 
   function onOverlayClick(e) {
     if (mode === 'route' && route) addRouteWaypoint(e)
+    if (mode === 'motion' && motion) addMotionWaypoint(e)
     if (mode === 'run') onRunClick(e)
   }
 
   const overlayCursor =
-    mode === 'drag'  ? (dragKey ? 'grabbing' : 'default') :
-    mode === 'route' ? (route   ? 'crosshair' : 'default') :
-    mode === 'run'   ? 'crosshair' : 'default'
+    mode === 'drag'   ? (dragKey ? 'grabbing' : 'default') :
+    mode === 'route'  ? (route   ? 'crosshair' : 'default') :
+    mode === 'motion' ? (motion  ? 'crosshair' : 'default') :
+    mode === 'run'    ? 'crosshair' : 'default'
 
   return (
     <div style={styles.root}>
@@ -221,6 +255,20 @@ export default function PlayCanvas({ selectedId }) {
           <button style={styles.hintBtn} onClick={finalizeRoute}>Terminer ✓</button>
           <button style={{ ...styles.hintBtn, background: 'rgba(255,255,255,0.08)' }}
             onClick={() => setRoute(null)}>Annuler</button>
+        </div>
+      )}
+      {mode === 'motion' && !motion && (
+        <div style={styles.hint}>Cliquez sur un joueur pour commencer son mouvement pré-snap</div>
+      )}
+      {mode === 'motion' && motion && (
+        <div style={styles.hintActive}>
+          <span style={{ color: '#FFD700', fontWeight: 700 }}>
+            {PLAYER_LABELS[motion.player]}
+          </span>
+          {' — '}{motion.path.length - 1} point(s). Cliquez sur le terrain pour ajouter des points.
+          <button style={{ ...styles.hintBtn, background: '#A08840' }} onClick={finalizeMotion}>Terminer ✓</button>
+          <button style={{ ...styles.hintBtn, background: 'rgba(255,255,255,0.08)' }}
+            onClick={() => setMotion(null)}>Annuler</button>
         </div>
       )}
       {mode === 'run' && (
@@ -265,6 +313,21 @@ export default function PlayCanvas({ selectedId }) {
               <circle key={i}
                 cx={(p.x / 100) * W} cy={(p.y / 100) * H}
                 r={4} fill="#E8521A" opacity={0.85} />
+            ))}
+
+            {/* Motion in progress — yellow dashed preview line */}
+            {mode === 'motion' && motion && motion.path.length >= 2 && (
+              <polyline
+                points={motion.path.map(p =>
+                  `${(p.x / 100) * W},${(p.y / 100) * H}`).join(' ')}
+                fill="none" stroke="#FFD700" strokeWidth="2"
+                strokeDasharray="5 3" opacity={0.9} strokeLinecap="round"
+              />
+            )}
+            {mode === 'motion' && motion && motion.path.slice(1).map((p, i) => (
+              <circle key={i}
+                cx={(p.x / 100) * W} cy={(p.y / 100) * H}
+                r={4} fill="#FFD700" opacity={0.85} />
             ))}
 
             {/* Run path first-click marker */}
@@ -323,6 +386,18 @@ export default function PlayCanvas({ selectedId }) {
                 )
               }
 
+              if (mode === 'motion' && !motion) {
+                return (
+                  <g key={key} style={{ cursor: 'pointer' }}>
+                    <circle cx={cx} cy={cy} r={r}
+                      fill="rgba(255,215,0,0.15)"
+                      stroke="rgba(255,215,0,0.6)"
+                      strokeWidth="1.5"
+                      onClick={e => startMotion(e, key)} />
+                  </g>
+                )
+              }
+
               return null
             })}
           </svg>
@@ -338,6 +413,20 @@ export default function PlayCanvas({ selectedId }) {
               <span style={styles.infoLabel}>{PLAYER_LABELS[r.player] || r.player}</span>
               <span style={styles.infoDetail}>{r.label} — {r.path.length} pts</span>
               <button style={styles.deleteBtn} onClick={() => removeRoute(r.player)}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Motions list */}
+      {(play.motions || []).filter(m => m.type === 'motion').length > 0 && (
+        <div style={styles.section}>
+          <div style={styles.sectionTitle}>Mouvements pré-snap</div>
+          {(play.motions || []).filter(m => m.type === 'motion').map(m => (
+            <div key={m.player} style={styles.infoRow}>
+              <span style={styles.infoLabel}>{PLAYER_LABELS[m.player] || m.player}</span>
+              <span style={styles.infoDetail}>{m.path.length} pts</span>
+              <button style={styles.deleteBtn} onClick={() => removeMotion(m.player)}>×</button>
             </div>
           ))}
         </div>

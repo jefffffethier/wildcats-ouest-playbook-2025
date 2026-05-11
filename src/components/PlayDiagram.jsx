@@ -54,7 +54,8 @@ export default function PlayDiagram({ play, width = 600, height = 400 }) {
   if (play.motions) {
     play.motions.forEach(m => {
       if (m.type === 'pre-snap') {
-        finalPositions[m.player] = { x: m.to.x, y: m.to.y }
+        const end = m.path ? m.path[m.path.length - 1] : m.to
+        finalPositions[m.player] = { x: end.x, y: end.y }
       }
     })
   }
@@ -102,20 +103,26 @@ export default function PlayDiagram({ play, width = 600, height = 400 }) {
       {/* Motion arrows (pre-snap, dashed) */}
       {play.motions && play.motions.map((m, i) => {
         if (m.type !== 'motion') return null
-        const from = toSvg(m.from.x, m.from.y, W, H)
-        const to = toSvg(m.to.x, m.to.y, W, H)
-        const angle = getAngle(from, to)
+        const pts = m.path
+          ? m.path.map(p => toSvg(p.x, p.y, W, H))
+          : [toSvg(m.from.x, m.from.y, W, H), toSvg(m.to.x, m.to.y, W, H)]
+        const last = pts[pts.length - 1]
+        const prev = pts[pts.length - 2]
+        const angle = getAngle(prev, last)
+        const d = pts.map((p, j) => `${j === 0 ? 'M' : 'L'} ${p.cx} ${p.cy}`).join(' ')
         return (
           <g key={i}>
-            <line
-              x1={from.cx} y1={from.cy}
-              x2={to.cx} y2={to.cy}
+            <path
+              d={d}
+              fill="none"
               stroke="#FFD700"
               strokeWidth="2"
               strokeDasharray="5 3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               opacity={0.8}
             />
-            <ArrowHead x={to.cx} y={to.cy} angle={angle} color="#FFD700" />
+            <ArrowHead x={last.cx} y={last.cy} angle={angle} color="#FFD700" />
           </g>
         )
       })}
