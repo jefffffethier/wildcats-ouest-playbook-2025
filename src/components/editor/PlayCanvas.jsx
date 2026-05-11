@@ -1,63 +1,84 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PlayDiagram from '../PlayDiagram.jsx'
 import { getPlay, updatePlay, subscribe } from '../../store/playbookStore.js'
 
-// Default positions used when a play has no positions field at all.
-const DEFAULT_POSITIONS = {
-  QB:   { x: 50, y: 62 },
-  RB:   { x: 50, y: 75 },
-  C:    { x: 50, y: 52 },
-  LG:   { x: 43, y: 52 },
-  RG:   { x: 57, y: 52 },
-  LT:   { x: 36, y: 52 },
-  RT:   { x: 64, y: 52 },
-  TE_L: { x: 30, y: 52 },
-  TE_R: { x: 70, y: 52 },
+const W = 560
+const H = 374
+
+const ALL_POSITIONS = [
+  'QB', 'RB', 'SB',
+  'WR_L', 'WR_R', 'WR_M',
+  'C', 'LG', 'RG', 'LT', 'RT',
+  'TE_L', 'TE_R',
+]
+
+const OL_SET = new Set(['C', 'LG', 'RG', 'LT', 'RT'])
+
+const DEFAULT_POS = {
+  QB:   { x: 50, y: 62 }, RB:  { x: 50, y: 75 },
+  C:    { x: 50, y: 52 }, LG:  { x: 43, y: 52 }, RG: { x: 57, y: 52 },
+  LT:   { x: 36, y: 52 }, RT:  { x: 64, y: 52 },
+  TE_L: { x: 30, y: 52 }, TE_R:{ x: 70, y: 52 },
   SB:   { x: 22, y: 58 },
-  WR_L: { x: 10, y: 52 },
-  WR_R: { x: 90, y: 52 },
+  WR_L: { x: 10, y: 52 }, WR_R:{ x: 90, y: 52 }, WR_M:{ x: 50, y: 40 },
 }
 
 const PLAYER_LABELS = {
-  QB: 'QB', RB: 'RB', SB: 'SB',
-  WR_L: 'WR (G)', WR_R: 'WR (D)',
-  C: 'Centre', LG: 'G Gauche', RG: 'G Droite',
-  LT: 'T Gauche', RT: 'T Droite',
-  TE_L: 'TE (G)', TE_R: 'TE (D)',
+  QB:'QB', RB:'RB', SB:'SB',
+  WR_L:'WR G', WR_R:'WR D', WR_M:'WR M',
+  C:'C', LG:'LG', RG:'RG', LT:'LT', RT:'RT',
+  TE_L:'TE G', TE_R:'TE D',
 }
 
-function getPositions(play) {
-  if (play.positions && Object.keys(play.positions).length > 0) {
-    return play.positions
+const MODE_LABELS = {
+  select: 'Normal',
+  drag:   'Déplacer joueur',
+  route:  'Route (passe)',
+  run:    'Chemin de course',
+}
+
+function toSvg(x, y) {
+  return { cx: (x / 100) * W, cy: (y / 100) * H }
+}
+
+function eventToPercent(e, svgEl) {
+  const rect = svgEl.getBoundingClientRect()
+  return {
+    x: Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100)),
+    y: Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100)),
   }
-  return { ...DEFAULT_POSITIONS }
 }
 
 export default function PlayCanvas({ selectedId }) {
-  const [play, setPlay] = useState(selectedId ? getPlay(selectedId) : null)
+  const [play, setPlay]       = useState(null)
+  const [mode, setMode]       = useState('select')
+  const [dragKey, setDragKey] = useState(null)
+  const [route, setRoute]     = useState(null)  // { player, path:[{x,y}...] }
+  const [runFrom, setRunFrom] = useState(null)  // {x,y} while waiting for 2nd click
+  const overlayRef            = useRef(null)
 
-  // Reload play from store whenever selectedId changes or store updates.
   useEffect(() => {
-    if (!selectedId) {
-      setPlay(null)
-      return
-    }
-    setPlay(getPlay(selectedId) || null)
-
-    const unsub = subscribe(() => {
-      setPlay(getPlay(selectedId) || null)
-    })
+    if (!selectedId) { setPlay(null); return }
+    setPlay(getPlay(selectedId) ?? null)
+    const unsub = subscribe(() => setPlay(getPlay(selectedId) ?? null))
     return unsub
   }, [selectedId])
 
-  // --- null state ---
+  // Reset interaction state when the selected play changes
+  useEffect(() => {
+    setMode('select'); setDragKey(null); setRoute(null); setRunFrom(null)
+  }, [selectedId])
+
   if (!selectedId || !play) {
     return (
       <div style={styles.root}>
         <div style={styles.placeholder}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style={{ marginBottom: 16, opacity: 0.3 }}>
-            <rect x="6" y="14" width="36" height="26" rx="3" stroke="#fff" strokeWidth="2" fill="none" />
-            <line x1="6" y1="24" x2="42" y2="24" stroke="#fff" strokeWidth="1.5" strokeDasharray="4 3" />
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none"
+            style={{ marginBottom: 16, opacity: 0.25 }}>
+            <rect x="6" y="14" width="36" height="26" rx="3"
+              stroke="#fff" strokeWidth="2" fill="none" />
+            <line x1="6" y1="24" x2="42" y2="24"
+              stroke="#fff" strokeWidth="1.5" strokeDasharray="4 3" />
             <circle cx="24" cy="37" r="3" fill="#fff" opacity="0.5" />
           </svg>
           <span style={styles.placeholderText}>Sélectionnez un jeu pour éditer</span>
@@ -66,22 +87,105 @@ export default function PlayCanvas({ selectedId }) {
     )
   }
 
-  const positions = getPositions(play)
+  const positions = play.positions || {}
 
-  function handleCoordChange(posKey, axis, rawValue) {
-    const parsed = parseFloat(rawValue)
-    if (isNaN(parsed)) return
-    // Clamp to 0–100 (percentage-based coordinate space)
-    const clamped = Math.min(100, Math.max(0, parsed))
-    const existing = positions[posKey] || { x: 50, y: 50 }
+  // ── Mode switch ────────────────────────────────────────────────────────────
+
+  function switchMode(m) {
+    setMode(m); setDragKey(null); setRoute(null); setRunFrom(null)
+  }
+
+  // ── Drag handlers ──────────────────────────────────────────────────────────
+
+  function onPlayerMouseDown(e, key) {
+    e.preventDefault(); e.stopPropagation()
+    setDragKey(key)
+  }
+
+  function onOverlayMouseMove(e) {
+    if (!dragKey || !overlayRef.current) return
+    e.preventDefault()
+    const { x, y } = eventToPercent(e, overlayRef.current)
     updatePlay(play.id, {
       positions: {
-        [posKey]: { ...existing, [axis]: clamped },
+        ...positions,
+        [dragKey]: { x: Math.round(x * 2) / 2, y: Math.round(y * 2) / 2 },
       },
     })
   }
 
-  // --- play loaded ---
+  function onOverlayMouseUp() { setDragKey(null) }
+
+  // ── Route handlers ─────────────────────────────────────────────────────────
+
+  function startRoute(e, key) {
+    e.stopPropagation()
+    if (route) return
+    const pos = positions[key] || DEFAULT_POS[key] || { x: 50, y: 50 }
+    setRoute({ player: key, path: [{ x: pos.x, y: pos.y }] })
+  }
+
+  function addRouteWaypoint(e) {
+    if (!route || !overlayRef.current) return
+    const pt = eventToPercent(e, overlayRef.current)
+    setRoute(r => ({ ...r, path: [...r.path, pt] }))
+  }
+
+  function finalizeRoute() {
+    if (!route || route.path.length < 2) { setRoute(null); return }
+    const label = PLAYER_LABELS[route.player] || route.player
+    const others = (play.routes || []).filter(r => r.player !== route.player)
+    updatePlay(play.id, {
+      routes: [...others, { player: route.player, path: route.path, label }],
+    })
+    setRoute(null)
+  }
+
+  function removeRoute(playerKey) {
+    updatePlay(play.id, {
+      routes: (play.routes || []).filter(r => r.player !== playerKey),
+    })
+  }
+
+  // ── Run path handlers ──────────────────────────────────────────────────────
+
+  function onRunClick(e) {
+    if (!overlayRef.current) return
+    const pt = eventToPercent(e, overlayRef.current)
+    if (!runFrom) {
+      setRunFrom(pt)
+    } else {
+      updatePlay(play.id, { runPath: { from: runFrom, to: pt } })
+      setRunFrom(null)
+      switchMode('select')
+    }
+  }
+
+  function removeRunPath() {
+    updatePlay(play.id, { runPath: undefined })
+  }
+
+  // ── Player toggle ──────────────────────────────────────────────────────────
+
+  function togglePlayer(key) {
+    const p = { ...positions }
+    if (p[key]) { delete p[key] }
+    else { p[key] = DEFAULT_POS[key] || { x: 50, y: 50 } }
+    updatePlay(play.id, { positions: p })
+  }
+
+  // ── Overlay click dispatcher ───────────────────────────────────────────────
+
+  function onOverlayClick(e) {
+    if (mode === 'route' && route) addRouteWaypoint(e)
+    if (mode === 'run') onRunClick(e)
+  }
+
+  const overlayCursor =
+    mode === 'drag'  ? (dragKey ? 'grabbing' : 'default') :
+    mode === 'route' ? (route   ? 'crosshair' : 'default') :
+    mode === 'run'   ? 'crosshair' : 'default'
+
   return (
     <div style={styles.root}>
       {/* Header */}
@@ -91,242 +195,328 @@ export default function PlayCanvas({ selectedId }) {
         <span style={styles.formation}>{play.formation}</span>
       </div>
 
-      {/* Diagram */}
+      {/* Mode toolbar */}
+      <div style={styles.modeBar}>
+        {Object.entries(MODE_LABELS).map(([k, label]) => (
+          <button key={k} onClick={() => switchMode(k)}
+            style={mode === k ? styles.modeBtnActive : styles.modeBtn}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Contextual instruction */}
+      {mode === 'drag' && (
+        <div style={styles.hint}>Cliquez et glissez un joueur pour le repositionner</div>
+      )}
+      {mode === 'route' && !route && (
+        <div style={styles.hint}>Cliquez sur un joueur pour commencer sa route</div>
+      )}
+      {mode === 'route' && route && (
+        <div style={styles.hintActive}>
+          <span style={{ color: '#E8521A', fontWeight: 700 }}>
+            {PLAYER_LABELS[route.player]}
+          </span>
+          {' — '}{route.path.length - 1} point(s). Cliquez sur le terrain pour ajouter des points.
+          <button style={styles.hintBtn} onClick={finalizeRoute}>Terminer ✓</button>
+          <button style={{ ...styles.hintBtn, background: 'rgba(255,255,255,0.08)' }}
+            onClick={() => setRoute(null)}>Annuler</button>
+        </div>
+      )}
+      {mode === 'run' && (
+        <div style={styles.hint}>
+          {!runFrom
+            ? 'Cliquez sur le terrain pour marquer le point de départ du porteur'
+            : 'Cliquez pour marquer la destination'}
+        </div>
+      )}
+
+      {/* Diagram + interactive overlay */}
       <div style={styles.diagramWrap}>
-        <div style={styles.diagramInner}>
-          <PlayDiagram play={play} width={560} height={374} />
+        <div style={{ position: 'relative', width: '100%', maxWidth: 560,
+          borderRadius: 10, overflow: 'hidden',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.45)' }}>
+          <PlayDiagram play={play} width={W} height={H} />
+          <svg
+            ref={overlayRef}
+            viewBox={`0 0 ${W} ${H}`}
+            width="100%"
+            style={{
+              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+              pointerEvents: mode !== 'select' ? 'all' : 'none',
+              cursor: overlayCursor,
+            }}
+            onMouseMove={onOverlayMouseMove}
+            onMouseUp={onOverlayMouseUp}
+            onMouseLeave={onOverlayMouseUp}
+            onClick={onOverlayClick}
+          >
+            {/* Route in progress — dashed preview line */}
+            {mode === 'route' && route && route.path.length >= 2 && (
+              <polyline
+                points={route.path.map(p =>
+                  `${(p.x / 100) * W},${(p.y / 100) * H}`).join(' ')}
+                fill="none" stroke="#E8521A" strokeWidth="2.5"
+                strokeDasharray="5 3" opacity={0.9} strokeLinecap="round"
+              />
+            )}
+            {/* Route waypoints */}
+            {mode === 'route' && route && route.path.slice(1).map((p, i) => (
+              <circle key={i}
+                cx={(p.x / 100) * W} cy={(p.y / 100) * H}
+                r={4} fill="#E8521A" opacity={0.85} />
+            ))}
+
+            {/* Run path first-click marker */}
+            {mode === 'run' && runFrom && (
+              <g>
+                <circle cx={(runFrom.x / 100) * W} cy={(runFrom.y / 100) * H}
+                  r={7} fill="#E8521A" opacity={0.8} />
+                <line
+                  x1={(runFrom.x / 100) * W - 5} y1={(runFrom.y / 100) * H}
+                  x2={(runFrom.x / 100) * W + 5} y2={(runFrom.y / 100) * H}
+                  stroke="#fff" strokeWidth={1.5} />
+                <line
+                  x1={(runFrom.x / 100) * W} y1={(runFrom.y / 100) * H - 5}
+                  x2={(runFrom.x / 100) * W} y2={(runFrom.y / 100) * H + 5}
+                  stroke="#fff" strokeWidth={1.5} />
+              </g>
+            )}
+
+            {/* Player hit areas (only rendered when not in select mode) */}
+            {mode !== 'select' && Object.entries(positions).map(([key, pos]) => {
+              const { cx, cy } = toSvg(pos.x, pos.y)
+              const isOL = OL_SET.has(key)
+              const r = (isOL ? 13 : 11) + 7
+              const isDragging = dragKey === key
+
+              if (mode === 'drag') {
+                return (
+                  <g key={key}>
+                    {isOL
+                      ? <rect x={cx - r} y={cy - r} width={r * 2} height={r * 2} rx="2"
+                          fill="transparent"
+                          stroke={isDragging ? '#fff' : 'rgba(255,255,255,0.5)'}
+                          strokeWidth={isDragging ? 2.5 : 1.5}
+                          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                          onMouseDown={e => onPlayerMouseDown(e, key)} />
+                      : <circle cx={cx} cy={cy} r={r}
+                          fill="transparent"
+                          stroke={isDragging ? '#fff' : 'rgba(255,255,255,0.5)'}
+                          strokeWidth={isDragging ? 2.5 : 1.5}
+                          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                          onMouseDown={e => onPlayerMouseDown(e, key)} />
+                    }
+                  </g>
+                )
+              }
+
+              if (mode === 'route' && !route) {
+                return (
+                  <g key={key} style={{ cursor: 'pointer' }}>
+                    <circle cx={cx} cy={cy} r={r}
+                      fill="rgba(232,82,26,0.18)"
+                      stroke="rgba(232,82,26,0.65)"
+                      strokeWidth="1.5"
+                      onClick={e => startRoute(e, key)} />
+                  </g>
+                )
+              }
+
+              return null
+            })}
+          </svg>
         </div>
       </div>
 
-      {/* Position editor */}
-      <div style={styles.editorSection}>
-        <div style={styles.editorTitle}>Positions des joueurs</div>
-        <div style={styles.hint}>
-          Coordonnées en % du terrain (0 = gauche/haut, 100 = droite/bas)
+      {/* Existing routes */}
+      {(play.routes || []).length > 0 && (
+        <div style={styles.section}>
+          <div style={styles.sectionTitle}>Routes</div>
+          {(play.routes || []).map(r => (
+            <div key={r.player} style={styles.infoRow}>
+              <span style={styles.infoLabel}>{PLAYER_LABELS[r.player] || r.player}</span>
+              <span style={styles.infoDetail}>{r.label} — {r.path.length} pts</span>
+              <button style={styles.deleteBtn} onClick={() => removeRoute(r.player)}>×</button>
+            </div>
+          ))}
         </div>
-        <div style={styles.tableWrap}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>Joueur</th>
-                <th style={{ ...styles.th, width: 90 }}>X (horiz.)</th>
-                <th style={{ ...styles.th, width: 90 }}>Y (vert.)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(positions).map(([key, pos]) => (
-                <PositionRow
-                  key={key}
-                  posKey={key}
-                  label={PLAYER_LABELS[key] || key}
-                  pos={pos}
-                  onChange={handleCoordChange}
-                />
-              ))}
-            </tbody>
-          </table>
+      )}
+
+      {/* Run path summary */}
+      {play.runPath && (
+        <div style={styles.section}>
+          <div style={styles.sectionTitle}>Chemin de course</div>
+          <div style={styles.infoRow}>
+            <span style={styles.infoDetail}>
+              ({play.runPath.from.x.toFixed(0)},{play.runPath.from.y.toFixed(0)})
+              {' → '}
+              ({play.runPath.to.x.toFixed(0)},{play.runPath.to.y.toFixed(0)})
+            </span>
+            <button style={styles.deleteBtn} onClick={removeRunPath}>×</button>
+          </div>
+        </div>
+      )}
+
+      {/* Player toggles */}
+      <div style={styles.section}>
+        <div style={styles.sectionTitle}>Joueurs actifs</div>
+        <div style={styles.toggleGrid}>
+          {ALL_POSITIONS.map(key => (
+            <label key={key} style={styles.toggleItem}>
+              <input
+                type="checkbox"
+                checked={!!positions[key]}
+                onChange={() => togglePlayer(key)}
+                style={{ accentColor: '#E8521A', marginRight: 5, cursor: 'pointer' }}
+              />
+              <span style={{
+                color: positions[key] ? '#fff' : 'rgba(255,255,255,0.3)',
+                fontFamily: 'Barlow Condensed, sans-serif',
+                fontSize: '0.82rem',
+                letterSpacing: '0.03em',
+              }}>
+                {PLAYER_LABELS[key]}
+              </span>
+            </label>
+          ))}
         </div>
       </div>
     </div>
   )
 }
 
-function PositionRow({ posKey, label, pos, onChange }) {
-  // Local state so the input is editable while typing, only commits on blur/enter.
-  const [xVal, setXVal] = useState(String(pos.x))
-  const [yVal, setYVal] = useState(String(pos.y))
-
-  // Keep local state in sync when the store updates from outside.
-  useEffect(() => { setXVal(String(pos.x)) }, [pos.x])
-  useEffect(() => { setYVal(String(pos.y)) }, [pos.y])
-
-  function commit(axis, value) {
-    onChange(posKey, axis, value)
-  }
-
-  return (
-    <tr style={styles.tr}>
-      <td style={styles.tdLabel}>{label}</td>
-      <td style={styles.tdInput}>
-        <input
-          type="number"
-          min="0"
-          max="100"
-          step="0.5"
-          value={xVal}
-          style={styles.coordInput}
-          onChange={e => setXVal(e.target.value)}
-          onBlur={e => commit('x', e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-        />
-      </td>
-      <td style={styles.tdInput}>
-        <input
-          type="number"
-          min="0"
-          max="100"
-          step="0.5"
-          value={yVal}
-          style={styles.coordInput}
-          onChange={e => setYVal(e.target.value)}
-          onBlur={e => commit('y', e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-        />
-      </td>
-    </tr>
-  )
-}
-
 const styles = {
   root: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%',
-    height: '100%',
-    background: '#0F1923',
-    overflowY: 'auto',
+    display: 'flex', flexDirection: 'column',
+    width: '100%', height: '100%',
+    background: '#0F1923', overflowY: 'auto',
   },
 
-  // --- placeholder ---
   placeholder: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    height: '100%',
-    minHeight: 320,
-    gap: 0,
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center',
+    flex: 1, height: '100%', minHeight: 320,
   },
   placeholderText: {
     fontFamily: 'Barlow Condensed, sans-serif',
-    fontSize: '1.1rem',
-    fontWeight: 600,
-    color: 'rgba(255,255,255,0.3)',
-    letterSpacing: '0.05em',
-    textTransform: 'uppercase',
+    fontSize: '1.1rem', fontWeight: 600,
+    color: 'rgba(255,255,255,0.25)',
+    letterSpacing: '0.05em', textTransform: 'uppercase',
   },
 
-  // --- header ---
   header: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
+    display: 'flex', alignItems: 'center', gap: '0.75rem',
     padding: '1rem 1.25rem 0.75rem',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
-    flexShrink: 0,
+    borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0,
   },
   playName: {
     fontFamily: 'Barlow Condensed, sans-serif',
-    fontSize: '1.25rem',
-    fontWeight: 800,
-    color: '#fff',
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
+    fontSize: '1.25rem', fontWeight: 800,
+    color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase',
   },
   badge: {
-    background: 'rgba(232,82,26,0.2)',
-    color: '#E8521A',
-    borderRadius: '4px',
-    padding: '0.15rem 0.55rem',
+    background: 'rgba(232,82,26,0.2)', color: '#E8521A',
+    borderRadius: '4px', padding: '0.15rem 0.55rem',
     fontFamily: 'Barlow Condensed, sans-serif',
-    fontSize: '0.7rem',
-    fontWeight: 700,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
+    fontSize: '0.7rem', fontWeight: 700,
+    letterSpacing: '0.08em', textTransform: 'uppercase',
   },
   formation: {
     fontFamily: 'Barlow Condensed, sans-serif',
-    fontSize: '0.75rem',
-    color: 'rgba(255,255,255,0.35)',
-    letterSpacing: '0.06em',
-    textTransform: 'uppercase',
+    fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)',
+    letterSpacing: '0.06em', textTransform: 'uppercase',
   },
 
-  // --- diagram ---
-  diagramWrap: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '1.25rem 1rem 1rem',
-    flexShrink: 0,
+  modeBar: {
+    display: 'flex', gap: '0.4rem',
+    padding: '0.6rem 1rem',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    flexShrink: 0, flexWrap: 'wrap',
   },
-  diagramInner: {
-    width: '100%',
-    maxWidth: 560,
-    borderRadius: '10px',
-    overflow: 'hidden',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
-  },
-
-  // --- position editor ---
-  editorSection: {
-    padding: '0 1.25rem 1.5rem',
-    flex: 1,
-  },
-  editorTitle: {
-    fontFamily: 'Barlow Condensed, sans-serif',
-    fontSize: '0.7rem',
-    fontWeight: 700,
-    letterSpacing: '0.15em',
-    color: 'rgba(255,255,255,0.3)',
-    textTransform: 'uppercase',
-    marginBottom: '0.3rem',
-  },
-  hint: {
-    fontFamily: 'Barlow Condensed, sans-serif',
-    fontSize: '0.7rem',
-    color: 'rgba(255,255,255,0.2)',
-    marginBottom: '0.75rem',
-    letterSpacing: '0.02em',
-  },
-  tableWrap: {
-    overflowX: 'auto',
-    borderRadius: '8px',
-    border: '1px solid rgba(255,255,255,0.07)',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    fontFamily: 'Barlow Condensed, sans-serif',
-    fontSize: '0.82rem',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '0.5rem 0.75rem',
-    fontWeight: 700,
-    letterSpacing: '0.08em',
-    color: 'rgba(255,255,255,0.35)',
-    fontSize: '0.68rem',
-    textTransform: 'uppercase',
-    background: 'rgba(255,255,255,0.04)',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
-  },
-  tr: {
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
-  },
-  tdLabel: {
-    padding: '0.45rem 0.75rem',
-    color: 'rgba(255,255,255,0.75)',
-    fontWeight: 600,
-    letterSpacing: '0.03em',
-    whiteSpace: 'nowrap',
-  },
-  tdInput: {
-    padding: '0.3rem 0.5rem',
-  },
-  coordInput: {
-    width: '72px',
+  modeBtn: {
     background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '5px',
-    padding: '0.3rem 0.5rem',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '5px', padding: '0.3rem 0.7rem',
+    color: 'rgba(255,255,255,0.55)',
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontSize: '0.78rem', fontWeight: 600,
+    letterSpacing: '0.04em', cursor: 'pointer',
+    transition: 'all 0.15s',
+  },
+  modeBtnActive: {
+    background: '#E8521A', border: '1px solid #E8521A',
+    borderRadius: '5px', padding: '0.3rem 0.7rem',
     color: '#fff',
     fontFamily: 'Barlow Condensed, sans-serif',
-    fontSize: '0.85rem',
-    outline: 'none',
-    textAlign: 'right',
-    appearance: 'textfield',
-    MozAppearance: 'textfield',
+    fontSize: '0.78rem', fontWeight: 700,
+    letterSpacing: '0.04em', cursor: 'pointer',
+  },
+
+  hint: {
+    padding: '0.45rem 1rem',
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)',
+    letterSpacing: '0.02em', flexShrink: 0,
+  },
+  hintActive: {
+    display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap',
+    padding: '0.45rem 1rem',
+    background: 'rgba(232,82,26,0.07)',
+    borderBottom: '1px solid rgba(232,82,26,0.15)',
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontSize: '0.78rem', color: 'rgba(255,255,255,0.65)',
+    flexShrink: 0,
+  },
+  hintBtn: {
+    background: '#E8521A', border: 'none', borderRadius: '4px',
+    padding: '0.2rem 0.6rem', color: '#fff',
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
+  },
+
+  diagramWrap: {
+    display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
+    padding: '1rem 1rem 0.75rem', flexShrink: 0,
+  },
+
+  section: {
+    padding: '0.6rem 1.25rem',
+    borderTop: '1px solid rgba(255,255,255,0.05)',
+  },
+  sectionTitle: {
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontSize: '0.65rem', fontWeight: 700,
+    letterSpacing: '0.15em', textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.25)', marginBottom: '0.4rem',
+  },
+  infoRow: {
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    padding: '0.25rem 0',
+  },
+  infoLabel: {
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontSize: '0.8rem', fontWeight: 700,
+    color: '#fff', minWidth: 40,
+  },
+  infoDetail: {
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)',
+    flex: 1,
+  },
+  deleteBtn: {
+    background: 'none', border: 'none',
+    color: 'rgba(255,255,255,0.3)', cursor: 'pointer',
+    fontSize: '1rem', lineHeight: 1, padding: '0 0.25rem',
+    transition: 'color 0.15s',
+  },
+
+  toggleGrid: {
+    display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))',
+    gap: '0.35rem',
+  },
+  toggleItem: {
+    display: 'flex', alignItems: 'center',
+    cursor: 'pointer', padding: '0.15rem 0',
   },
 }
