@@ -170,6 +170,14 @@
   color: var(--orange);
   margin-bottom: 0.8rem;
 }
+.ol-card-goal{
+  margin-top: 0.8rem;
+  margin-left: 0.8rem;
+}
+.ol-card-goal h3{
+  font-size: 1rem;
+    color: var(--orange);
+}
 .ol-concept-text {
   font-family: var(--font-body);
   font-size: 0.88rem;

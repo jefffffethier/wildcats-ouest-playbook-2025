@@ -242,6 +242,10 @@ export default function OLinePage({ onLock, onNavigate }) {
 
               <OLineDiagram scheme={scheme} />
 
+              <div className="ol-card-goal">
+                <h3>{scheme.goal}</h3>
+              </div>
+              
               <div className="ol-assignment-list">
                 {scheme.assignments.map((a, i) => (
                   <div key={i} className="ol-assignment-row">

@@ -14,6 +14,7 @@ const DIVE_SCHEMES = {
         id: 'alpha',
         code: 'Alpha',
         gap: 'A GAP',
+        goal: 'On doit créer un trou dans le A Gap',
         defenders: [
           { x: 65,  y: 78 },
           { x: 175, y: 76 },
@@ -78,6 +79,7 @@ const DIVE_SCHEMES = {
         id: 'charlie',
         code: 'Charlie',
         gap: 'C GAP',
+        goal: 'On doit créer un trou dans le C Gap',
         defenders: [
           { x: 42,  y: 82 },
           { x: 175, y: 76 },
@@ -143,6 +145,7 @@ const DIVE_SCHEMES = {
         id: 'bob-blitz',
         code: 'BOB',
         gap: 'B GAP',
+        goal: 'On doit créer un trou dans le B Gap',
         defenders: [
           { x: 65,  y: 78 },
           { x: 120, y: 78 },
@@ -173,6 +176,7 @@ const DIVE_SCHEMES = {
         id: 'charlie-blitz',
         code: 'Charlie',
         gap: 'C GAP',
+        goal: 'On doit créer un trou dans le C Gap',
         defenders: [
           { x: 42,  y: 82 },
           { x: 175, y: 76 },
@@ -207,6 +211,7 @@ right: {
         id: 'alpha',
         code: 'Alpha',
         gap: 'A GAP',
+        goal: 'On doit créer un trou dans le A Gap',
         defenders: [
           { x: 65,  y: 78 },
           { x: 175, y: 76 },
@@ -238,6 +243,7 @@ right: {
         id: 'bob',
         code: 'BOB',
         gap: 'B GAP',
+        goal: 'On doit créer un trou dans le B Gap',
         defenders: [
           { x: 65,  y: 78 },
           { x: 120, y: 78 },
@@ -271,6 +277,7 @@ right: {
         id: 'charlie',
         code: 'Charlie',
         gap: 'C GAP',
+        goal: 'On doit créer un trou dans le C Gap',
         defenders: [
           { x: 42,  y: 82 },
           { x: 175, y: 76 },
@@ -307,6 +314,7 @@ right: {
         id: 'alpha-blitz',
         code: 'Alpha',
         gap: 'A GAP',
+        goal: 'On doit créer un trou dans le A Gap',
         defenders: [
           { x: 65,  y: 78 },
           { x: 175, y: 76 },
@@ -336,6 +344,7 @@ right: {
         id: 'bob-blitz',
         code: 'BOB',
         gap: 'B GAP',
+        goal: 'On doit créer un trou dans le B Gap',
         defenders: [
           { x: 65,  y: 78 },
           { x: 120, y: 78 },
@@ -366,6 +375,7 @@ right: {
         id: 'charlie-blitz',
         code: 'Charlie',
         gap: 'C GAP',
+        goal: 'On doit créer un trou dans le C Gap',
         defenders: [
           { x: 42,  y: 82 },
           { x: 175, y: 76 },
