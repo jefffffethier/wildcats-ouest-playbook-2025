@@ -165,7 +165,7 @@ const EDITOR_PASSWORD = 'wildcats-edit-2025'  // ← changer ici
 
 Dans `src/components/PasswordGate.jsx`, ligne 3:
 ```js
-const CORRECT_PASSWORD = 'wildcats2025'  // ← changer ici
+const CORRECT_PASSWORD = '2025'  // ← changer ici
 ```
 
 ## Déployer sur GitHub Pages

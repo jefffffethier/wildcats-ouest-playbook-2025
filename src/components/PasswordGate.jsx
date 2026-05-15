@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const CORRECT_PASSWORD = 'wildcats2025'
+const CORRECT_PASSWORD = '2025'
 
 export default function PasswordGate({ onUnlock }) {
   const [value, setValue] = useState('')
