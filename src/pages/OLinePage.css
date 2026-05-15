@@ -374,3 +374,16 @@
   color: var(--navy);
   line-height: 1.4;
 }
+
+@media (max-width: 600px) {
+  .ol-toggle-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .ol-toggle-label--spaced {
+    margin-left: 0;
+  }
+  .ol-toggle-btn {
+    padding: 0.4rem 0.75rem;
+  }
+}

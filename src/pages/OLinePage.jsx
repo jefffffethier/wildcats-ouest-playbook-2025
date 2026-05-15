@@ -50,7 +50,7 @@ function loadPrefs() {
 
 export default function OLinePage({ onLock, onNavigate }) {
   const [prefs, setPrefs] = useState(loadPrefs)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 600)
 
   function updatePrefs(patch) {
     const next = { ...prefs, ...patch }
@@ -179,6 +179,7 @@ export default function OLinePage({ onLock, onNavigate }) {
 
           {/* Direction + Gap filter + Situation on the same row */}
           <div className="ol-toggle-row">
+            <div className="ol-toggle-row">
             <span className="ol-toggle-label">DIRECTION :</span>
             <div className="ol-toggle-group">
               {DIRECTION_OPTS.map(opt => (
@@ -191,7 +192,9 @@ export default function OLinePage({ onLock, onNavigate }) {
                 </button>
               ))}
             </div>
+            </div>
 
+            <div className="ol-toggle-row">
             <span className="ol-toggle-label ol-toggle-label--spaced">GAP :</span>
             <div className="ol-toggle-group">
               {GAP_FILTER_OPTS.map(opt => (
@@ -204,6 +207,7 @@ export default function OLinePage({ onLock, onNavigate }) {
                   {opt.label}
                 </button>
               ))}
+            </div>
             </div>
 {/* 
             <span className="ol-toggle-label ol-toggle-label--spaced">SITUATION :</span>
@@ -245,7 +249,7 @@ export default function OLinePage({ onLock, onNavigate }) {
               <div className="ol-card-goal">
                 <h3>{scheme.goal}</h3>
               </div>
-              
+
               <div className="ol-assignment-list">
                 {scheme.assignments.map((a, i) => (
                   <div key={i} className="ol-assignment-row">
