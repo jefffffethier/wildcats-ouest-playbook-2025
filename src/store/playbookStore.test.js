@@ -110,7 +110,7 @@ describe('playbookStore', () => {
         description: 'A test play',
         snap: 'shotgun',
         positions: { QB: { x: 50, y: 70 } },
-        assignments: [],
+        assignments: {},
       })
       expect(newPlay.id).toBeDefined()
       expect(typeof newPlay.id).toBe('string')
@@ -119,15 +119,15 @@ describe('playbookStore', () => {
     })
 
     it('persists to localStorage', () => {
-      addPlay({ name: 'Persisted', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: [] })
+      addPlay({ name: 'Persisted', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: {} })
       const raw = localStorageMock.getItem('wc_playbook')
       const parsed = JSON.parse(raw)
       expect(parsed.some(p => p.name === 'Persisted')).toBe(true)
     })
 
     it('generates unique ids for each new play', () => {
-      const a = addPlay({ name: 'A', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: [] })
-      const b = addPlay({ name: 'B', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: [] })
+      const a = addPlay({ name: 'A', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: {} })
+      const b = addPlay({ name: 'B', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: {} })
       expect(a.id).not.toBe(b.id)
     })
   })
@@ -258,7 +258,7 @@ describe('playbookStore', () => {
   describe('exportPlaybook() + importPlaybook()', () => {
     it('round-trips: export then import restores identical plays', () => {
       // Mutate the store a bit first
-      addPlay({ name: 'Export Test', formation: 'Pistol', type: 'run', description: '', snap: 'down', positions: {}, assignments: [] })
+      addPlay({ name: 'Export Test', formation: 'Pistol', type: 'run', description: '', snap: 'down', positions: {}, assignments: {} })
       const exported = exportPlaybook()
 
       // Wipe and re-seed
@@ -284,7 +284,7 @@ describe('playbookStore', () => {
 
     it('importPlaybook overwrites the store', () => {
       const snapshot = exportPlaybook()
-      addPlay({ name: 'Extra', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: [] })
+      addPlay({ name: 'Extra', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: {} })
       importPlaybook(snapshot)
       expect(getPlays()).toHaveLength(JSON.parse(snapshot).length)
     })
@@ -297,7 +297,7 @@ describe('playbookStore', () => {
     it('calls the listener with the full plays array on addPlay', () => {
       const listener = vi.fn()
       subscribe(listener)
-      addPlay({ name: 'Sub Test', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: [] })
+      addPlay({ name: 'Sub Test', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: {} })
       expect(listener).toHaveBeenCalledOnce()
       expect(Array.isArray(listener.mock.calls[0][0])).toBe(true)
     })
@@ -328,7 +328,7 @@ describe('playbookStore', () => {
       const listener = vi.fn()
       const unsub = subscribe(listener)
       unsub()
-      addPlay({ name: 'After Unsub', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: [] })
+      addPlay({ name: 'After Unsub', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: {} })
       expect(listener).not.toHaveBeenCalled()
     })
 
@@ -337,7 +337,7 @@ describe('playbookStore', () => {
       const b = vi.fn()
       subscribe(a)
       subscribe(b)
-      addPlay({ name: 'Multi', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: [] })
+      addPlay({ name: 'Multi', formation: 'I', type: 'run', description: '', snap: 'down', positions: {}, assignments: {} })
       expect(a).toHaveBeenCalledOnce()
       expect(b).toHaveBeenCalledOnce()
     })

@@ -2,7 +2,7 @@
 // Viewport: 500 × 190  — coordinates match olineSchemes.js
 
 const VW = 500
-const VH = 190
+const VH = 210
 
 const OLINE = [
   { id: 'LW', x: 75,  y: 145, label: 'W', type: 'wing' },
@@ -16,7 +16,7 @@ const OLINE = [
 
 const C = {
   field:    '#2D5A27',
-  ol:       { fill: '#fff',     stroke: '#1B2A4A', text: '#1B2A4A' },
+  ol:       { fill: '#A08840',     stroke: '#7A6530', text: '#fff' },
   wing:     { fill: '#A08840',  stroke: '#7A6530', text: '#fff'    },
   fb:       { fill: '#7B3FD4',  stroke: '#5A2E9E', text: '#fff'    },
   defender: '#E8521A',
@@ -24,7 +24,7 @@ const C = {
   release:  'rgba(255,255,255,0.55)',
   blitz:    '#FF3B30',
   runZone:  '#4CFF80',
-  los:      '#FFD700',
+  los:      '#FFFFFF',
 }
 
 function XMark({ x, y, size = 9 }) {
@@ -63,8 +63,30 @@ function Arrow({ x1, y1, x2, y2, color, width = 1.8, dashed = false, headSize = 
   )
 }
 
+function BlockLine({ x1, y1, x2, y2, color, width = 1.8, dashed = false, capSize = 10 }) {
+  const angle = Math.atan2(y2 - y1, x2 - x1)
+  const perp  = angle + Math.PI / 2
+  const half  = capSize / 2
+  return (
+    <g>
+      <line
+        x1={x1} y1={y1} x2={x2} y2={y2}
+        stroke={color} strokeWidth={width}
+        strokeDasharray={dashed ? '5 3' : undefined}
+        strokeLinecap="round"
+      />
+      <line
+        x1={x2 + Math.cos(perp) * half} y1={y2 + Math.sin(perp) * half}
+        x2={x2 - Math.cos(perp) * half} y2={y2 - Math.sin(perp) * half}
+        stroke={color} strokeWidth={width}
+        strokeLinecap="round"
+      />
+    </g>
+  )
+}
+
 export default function OLineDiagram({ scheme }) {
-  const { defenders, blocks, releases = [], runX, fb, blitzer, fbBlock } = scheme
+  const { defenders, blocks, releases = [], runX, fb, blitzer, fbBlock, gap } = scheme
   const gapHalf = 27
 
   return (
@@ -92,17 +114,25 @@ export default function OLineDiagram({ scheme }) {
         width={gapHalf * 2} height={96}
         fill="none" stroke={C.runZone} strokeWidth="1.5" opacity={0.4} rx={3}
       />
+      
+      {/* Run zone — Gap Text */}
+          <text
+            x={runX} y={95}
+            width={gapHalf * 2}
+            textAnchor="middle"
+            fill={C.runZone}
+            fontSize="11"
+            fontFamily="Barlow Condensed, sans-serif"
+            fontWeight="800"
+            opacity={0.9}
+          >{gap}</text>
 
       {/* Line of scrimmage */}
       <line x1={0} y1={120} x2={VW} y2={120}
             stroke={C.los} strokeWidth="1.5" strokeDasharray="6 4" opacity={0.55} />
       <text x={VW - 8} y={113} textAnchor="end"
-            fill="rgba(255,215,0,0.45)" fontSize="7.5"
+            fill="rgba(255, 255, 255, 0.45)" fontSize="7.5"
             fontFamily="Barlow Condensed" fontWeight="600">LIGNE DE MÊLÉE</text>
-
-      {/* Direction label */}
-      <text x={8} y={178} fill="rgba(255,255,255,0.35)"
-            fontSize="7.5" fontFamily="Barlow Condensed">← GAUCHE</text>
 
       {/* Blitz rush arrow */}
       {blitzer && (
@@ -113,21 +143,21 @@ export default function OLineDiagram({ scheme }) {
         />
       )}
 
-      {/* 2nd-level release arrows (white dashed) */}
+      {/* 2nd-level release lines */}
       {releases.map((rel, i) => (
-        <Arrow key={i}
+        <BlockLine key={i}
           x1={rel.from[0]} y1={rel.from[1]}
           x2={rel.to[0]}   y2={rel.to[1]}
-          color={C.release} width={1.4} dashed headSize={6}
+          color={C.release} width={1.4} dashed capSize={8}
         />
       ))}
 
-      {/* Block assignment arrows */}
+      {/* Block assignment lines */}
       {blocks.map((b, i) => (
-        <Arrow key={i}
+        <BlockLine key={i}
           x1={b.from[0]} y1={b.from[1]}
           x2={b.to[0]}   y2={b.to[1]}
-          color={C.block} width={2} headSize={7}
+          color={C.block} width={2} capSize={10}
         />
       ))}
 
@@ -183,13 +213,13 @@ export default function OLineDiagram({ scheme }) {
         <rect x={0} y={0} width={320} height={32} rx={3} fill="rgba(0,0,0,0.58)" />
 
         {/* Block */}
-        <line x1={7} y1={9} x2={20} y2={9} stroke={C.block} strokeWidth="2" />
-        <polygon points="20,6 25,9 20,12" fill={C.block} />
+        <line x1={7} y1={9} x2={22} y2={9} stroke={C.block} strokeWidth="2" strokeLinecap="round" />
+        <line x1={22} y1={5} x2={22} y2={13} stroke={C.block} strokeWidth="2" strokeLinecap="round" />
         <text x={30} y={13} fill="#fff" fontSize="7.5" fontFamily="Barlow Condensed">Block</text>
 
         {/* 2e niveau */}
-        <line x1={68} y1={9} x2={81} y2={9} stroke={C.release} strokeWidth="1.5" strokeDasharray="3 2" />
-        <polygon points="81,6 86,9 81,12" fill={C.release} />
+        <line x1={68} y1={9} x2={83} y2={9} stroke={C.release} strokeWidth="1.5" strokeDasharray="3 2" />
+        <line x1={83} y1={5} x2={83} y2={13} stroke={C.release} strokeWidth="1.5" strokeLinecap="round" />
         <text x={91} y={13} fill="#fff" fontSize="7.5" fontFamily="Barlow Condensed">2e niveau</text>
 
         {/* Blitz */}

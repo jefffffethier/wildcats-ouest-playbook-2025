@@ -35,12 +35,18 @@ export default function PlayCard({ play }) {
         <div style={styles.assignments}>
           <h3 style={styles.assignTitle}>ASSIGNATIONS</h3>
           <ul style={styles.assignList}>
-            {play.assignments.map((a, i) => (
-              <li key={i} style={styles.assignItem}>
-                <span style={styles.bullet} />
-                <span>{a}</span>
-              </li>
-            ))}
+            {Object.entries(play.assignments || {})
+              .filter(([, html]) => html && html !== '<p></p>')
+              .map(([pos, html]) => (
+                <li key={pos} style={styles.assignItem}>
+                  <span style={styles.bullet} />
+                  <span>
+                    <strong style={styles.posKey}>{pos}</strong>
+                    {' — '}
+                    <span dangerouslySetInnerHTML={{ __html: html }} />
+                  </span>
+                </li>
+              ))}
           </ul>
         </div>
       </div>
@@ -149,6 +155,13 @@ const styles = {
     fontSize: '0.8rem',
     lineHeight: 1.4,
     color: 'var(--text)',
+  },
+  posKey: {
+    fontFamily: 'var(--font-display)',
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    color: 'var(--navy)',
   },
   bullet: {
     display: 'block',

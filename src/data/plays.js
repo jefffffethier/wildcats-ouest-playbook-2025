@@ -1,8 +1,8 @@
 const plays = [
-  {
+  /*{
     id: "dt-dive-gauche",
     name: "Dive à Gauche",
-    formation: "Double Tight",
+    formation: "Wing i",
     type: "run",
     description: "Remise au running back qui court vers le B Gap côté gauche.",
     snap: "down",
@@ -35,14 +35,18 @@ const plays = [
       { player: "RT", note: "1v1 défenseur" },
       { player: "SB", note: "Motion + Bloque" },
     ],
-    assignments: [
-      "LT / RT / LG / RG / TE — Bloque 1 contre 1 sur la ligne défensive, si aucun joueur → monte au 2e niveau",
-      "C — Bloque le joueur dans le A Gap, si aucun joueur → bloque à droite",
-      "TE — 1 pas en arrière avant le snap, puis 1 pas plus loin que le tackle",
-      "SB — Fait le tour arrière et arrive en mouvement à la ligne de mêlée",
-      "QB — Under center",
-      "RB — 5 verges derrière le centre, reçoit la remise et court vers le B Gap gauche",
-    ]
+    assignments: {
+      LT:   "Bloque 1 contre 1 sur la ligne défensive, si aucun joueur → monte au 2e niveau",
+      RT:   "Bloque 1 contre 1 sur la ligne défensive, si aucun joueur → monte au 2e niveau",
+      LG:   "Bloque 1 contre 1 sur la ligne défensive, si aucun joueur → monte au 2e niveau",
+      RG:   "Bloque 1 contre 1 sur la ligne défensive, si aucun joueur → monte au 2e niveau",
+      TE_L: "1 pas en arrière avant le snap, puis 1 pas plus loin que le tackle",
+      TE_R: "1 pas en arrière avant le snap, puis 1 pas plus loin que le tackle",
+      C:    "Bloque le joueur dans le A Gap, si aucun joueur → bloque à droite",
+      SB:   "Fait le tour arrière et arrive en mouvement à la ligne de mêlée",
+      QB:   "Under center",
+      RB:   "5 verges derrière le centre, reçoit la remise et court vers le B Gap gauche",
+    }
   },
   {
     id: "dt-inside-zone-droite",
@@ -81,14 +85,19 @@ const plays = [
       { player: "RT", note: "Down block droite" },
       { player: "TE_L", note: "Laisse EMOL, monte au 2e niveau" },
     ],
-    assignments: [
-      "LT / LG / C / RG / RT — Down block les gaps à droite, si personne → double team + monte au LB",
-      "TE à gauche — Laisse le EMOL libre, monte au deuxième niveau",
-      "QB — Under center, backside pivot et bootleg après la remise",
-      "RB — 5 verges derrière le centre, hard step backside, reçoit la remise et court vers le A Gap",
-      "SB — 4 verges du tackle, 1 verge derrière",
-      "WR — 8 verges du tackle",
-    ]
+    assignments: {
+      LT:   "Down block les gaps à droite, si personne → double team + monte au LB",
+      LG:   "Down block les gaps à droite, si personne → double team + monte au LB",
+      C:    "Down block les gaps à droite, si personne → double team + monte au LB",
+      RG:   "Down block les gaps à droite, si personne → double team + monte au LB",
+      RT:   "Down block les gaps à droite, si personne → double team + monte au LB",
+      TE_L: "Laisse le EMOL libre, monte au deuxième niveau",
+      QB:   "Under center, backside pivot et bootleg après la remise",
+      RB:   "5 verges derrière le centre, hard step backside, reçoit la remise et court vers le A Gap",
+      SB:   "4 verges du tackle, 1 verge derrière",
+      WR_L: "8 verges du tackle",
+      WR_R: "8 verges du tackle",
+    }
   },
   {
     id: "dt-sonic-gauche",
@@ -127,14 +136,17 @@ const plays = [
       { player: "RT",  note: "Down block devant RG" },
       { player: "RB",  note: "Bloque le safety" },
     ],
-    assignments: [
-      "LT / LG / C — Down block à droite",
-      "RG — Crash block EMOL (dernier joueur de la ligne)",
-      "RT — Down block devant le RG pour le remplacer",
-      "TE — 1 pas en arrière avant le snap",
-      "RB — Se place à côté des TE avant le snap, bloque le safety",
-      "SB — Commence son mouvement, reçoit la remise et court entre les blocs du RB et TE",
-    ]
+    assignments: {
+      LT:   "Down block à droite",
+      LG:   "Down block à droite",
+      C:    "Down block à droite",
+      RG:   "Crash block EMOL (dernier joueur de la ligne)",
+      RT:   "Down block devant le RG pour le remplacer",
+      TE_L: "1 pas en arrière avant le snap",
+      TE_R: "1 pas en arrière avant le snap",
+      RB:   "Se place à côté des TE avant le snap, bloque le safety",
+      SB:   "Commence son mouvement, reçoit la remise et court entre les blocs du RB et TE",
+    }
   },
   {
     id: "dt-flood",
@@ -168,15 +180,20 @@ const plays = [
       { player: "WR_L", path: [{ x: 10, y: 52 }, { x: 10, y: 38 }, { x: 40, y: 38 }], label: "HOOK @7" },
     ],
     passProtection: ["LT","LG","C","RG","RT","RB"],
-    assignments: [
-      "LT / RT / LG / RG / C — Pass protection",
-      "RB — Pass protection block",
-      "SB — Change de côté et court son tracé (OUT @5)",
-      "WR droit — CORNER @7 (coin de la zone de but)",
-      "WR gauche — HOOK @7 (intérieur du terrain)",
-      "TE — 1 pas en arrière avant le snap, puis pass protection",
-    ]
-  }
+    assignments: {
+      LT:   "Pass protection",
+      RT:   "Pass protection",
+      LG:   "Pass protection",
+      RG:   "Pass protection",
+      C:    "Pass protection",
+      RB:   "Pass protection block",
+      SB:   "Change de côté et court son tracé (OUT @5)",
+      WR_R: "CORNER @7 (coin de la zone de but)",
+      WR_L: "HOOK @7 (intérieur du terrain)",
+      TE_L: "1 pas en arrière avant le snap, puis pass protection",
+      TE_R: "1 pas en arrière avant le snap, puis pass protection",
+    }
+  }*/
 ]
 
 export default plays

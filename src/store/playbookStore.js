@@ -21,14 +21,15 @@
  *   description: string,
  *   snap: string,
  *   positions: { [player: string]: { x: number, y: number } },
- *   motions?: Array<{ player: string, from: {x,y}, to: {x,y}, type: string }>,
+ *   motions?: Array<{ player: string, path: {x,y}[], type: string }>,
  *   ballCarrier?: string,
  *   runPath?: { from: {x,y}, to: {x,y} },
  *   qbPath?: { from: {x,y}, to: {x,y}, type: string },
  *   blocks?: Array<{ player: string, note: string }>,
  *   routes?: Array<{ player: string, path: {x,y}[], label: string }>,
  *   passProtection?: string[],
- *   assignments: string[],
+ *   assignments: { [positionKey: string]: string },
+ *   slug?: string,
  * }
  *
  * localStorage key: wc_playbook
@@ -178,9 +179,12 @@ export function reorderPlays(ids) {
   _notify()
 }
 
-/** Serialize the entire playbook to a JSON string. */
+/** Serialize the entire playbook to a JSON string.
+ *  If a play has a `slug` field, it is used as the exported `id`. */
 export function exportPlaybook() {
-  return JSON.stringify(_plays)
+  return JSON.stringify(_plays.map(({ slug, ...p }) =>
+    slug ? { ...p, id: slug } : p
+  ))
 }
 
 /**

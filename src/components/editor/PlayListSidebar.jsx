@@ -13,6 +13,7 @@ const DEFAULT_PLAY = {
   type: 'pass',
   snap: 'down',
   formation: 'Double Tight',
+  description: '',
   assignments: {},
 }
 

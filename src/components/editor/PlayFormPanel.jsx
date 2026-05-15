@@ -84,9 +84,21 @@ export default function PlayFormPanel({ selectedId }) {
     updatePlay(play.id, { snap: e.target.value })
   }
 
+  function handleDescriptionBlur(e) {
+    if (!play) return
+    const description = e.target.value
+    if (description !== (play.description ?? '')) updatePlay(play.id, { description })
+  }
+
+  function handleSlugBlur(e) {
+    if (!play) return
+    const slug = e.target.value.trim()
+    if (slug !== (play.slug ?? '')) updatePlay(play.id, { slug })
+  }
+
   const handleAssignmentBlur = useCallback((pos, html) => {
     if (!play) return
-    updatePlay(play.id, { assignments: { [pos]: html } })
+    updatePlay(play.id, { assignments: { ...play.assignments, [pos]: html } })
   }, [play])
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -150,6 +162,23 @@ export default function PlayFormPanel({ selectedId }) {
           style={styles.input}
           defaultValue={play.formation}
           onBlur={handleFormationBlur}
+        />
+
+        <label style={styles.fieldLabel}>Description</label>
+        <input
+          key={`desc-${play.id}`}
+          style={styles.input}
+          defaultValue={play.description ?? ''}
+          onBlur={handleDescriptionBlur}
+        />
+
+        <label style={styles.fieldLabel}>ID export</label>
+        <input
+          key={`slug-${play.id}`}
+          style={styles.input}
+          defaultValue={play.slug ?? ''}
+          placeholder={play.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}
+          onBlur={handleSlugBlur}
         />
       </div>
 

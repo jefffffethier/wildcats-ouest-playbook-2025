@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue *)",
+      "Bash(npm install *)",
+      "Bash(npm test *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(cp src/components/editor/ExportImportControls.test.js src/components/editor/ExportImportControls.test.jsx)",
+      "Bash(git rm *)",
+      "Bash(npm run *)"
+    ]
+  }
+}
