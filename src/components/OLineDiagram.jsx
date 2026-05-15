@@ -4,16 +4,6 @@
 const VW = 500
 const VH = 210
 
-const OLINE = [
-  { id: 'LW', x: 75,  y: 145, label: 'W', type: 'wing' },
-  { id: 'LT', x: 150, y: 145, label: 'T', type: 'ol'   },
-  { id: 'LG', x: 210, y: 145, label: 'G', type: 'ol'   },
-  { id: 'C',  x: 270, y: 145, label: 'C', type: 'ol'   },
-  { id: 'RG', x: 330, y: 145, label: 'G', type: 'ol'   },
-  { id: 'RT', x: 390, y: 145, label: 'T', type: 'ol'   },
-  { id: 'RW', x: 455, y: 145, label: 'W', type: 'wing' },
-]
-
 const C = {
   field:    '#2D5A27',
   ol:       { fill: '#A08840',     stroke: '#7A6530', text: '#fff' },
@@ -86,7 +76,7 @@ function BlockLine({ x1, y1, x2, y2, color, width = 1.8, dashed = false, capSize
 }
 
 export default function OLineDiagram({ scheme }) {
-  const { defenders, blocks, releases = [], runX, fb, blitzer, fbBlock, gap } = scheme
+  const { defenders, blocks, releases = [], runX, oline, fb, blitzer, fbBlock, gap } = scheme
   const gapHalf = 27
 
   return (
@@ -174,7 +164,7 @@ export default function OLineDiagram({ scheme }) {
       {defenders.map((d, i) => <XMark key={i} x={d.x} y={d.y} />)}
 
       {/* O-line players */}
-      {OLINE.map(p => {
+      {oline.map(p => {
         if (p.type === 'ol') {
           return (
             <g key={p.id}>
