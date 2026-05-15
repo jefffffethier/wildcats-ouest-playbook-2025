@@ -7,7 +7,7 @@ import EditorPage from './pages/EditorPage.jsx'
 
 export default function App() {
   const [unlocked, setUnlocked] = useState(false)
-  const [page, setPage] = useState('playbook')
+  const [page, setPage] = useState('oline')
 
   useEffect(() => {
     if (localStorage.getItem('wc_auth') === '1') setUnlocked(true)

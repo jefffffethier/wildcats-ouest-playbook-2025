@@ -41,11 +41,11 @@ export default function PlaybookPage({ onLock, onNavigate }) {
 
         <div style={styles.filterSection}>
           <div style={styles.filterLabel}>NAVIGATION</div>
-          <button style={{ ...styles.filterBtn, ...styles.filterBtnActive }}>
-            Livre de Jeu
-          </button>
           <button style={styles.filterBtn} onClick={() => onNavigate('oline')}>
             Ligne Offensive
+          </button>
+          <button style={{ ...styles.filterBtn, ...styles.filterBtnActive }}>
+            Livre de Jeu
           </button>
           <button style={styles.filterBtn} onClick={() => onNavigate('editor')}>
             Éditeur

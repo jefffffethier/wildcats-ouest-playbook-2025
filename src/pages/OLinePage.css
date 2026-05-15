@@ -15,7 +15,34 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow: auto;
+  overflow: visible;
+  transition: width 0.2s ease;
+}
+.ol-sidebar--collapsed {
+  width: 36px;
+}
+.ol-sidebar-toggle {
+  position: absolute;
+  top: 12px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--dark);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 0;
+}
+.ol-sidebar-toggle:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 .ol-sidebar-header {
   display: flex;

@@ -50,6 +50,7 @@ function loadPrefs() {
 
 export default function OLinePage({ onLock, onNavigate }) {
   const [prefs, setPrefs] = useState(loadPrefs)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   function updatePrefs(patch) {
     const next = { ...prefs, ...patch }
@@ -67,45 +68,51 @@ export default function OLinePage({ onLock, onNavigate }) {
     <div className="ol-root">
 
       {/* ── Sidebar ── */}
-      <aside className="ol-sidebar no-print">
-        <div className="ol-sidebar-header">
-          <div className="ol-logo-mark">
-            <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-              <polygon points="24,4 44,44 4,44" fill="#E8521A" opacity="0.2" />
-              <polygon points="24,4 44,44 4,44" fill="none" stroke="#E8521A" strokeWidth="2" />
-              <text x="24" y="34" textAnchor="middle" fill="#E8521A" fontSize="18"
-                    fontWeight="800" fontFamily="Barlow Condensed">W</text>
-            </svg>
+      <aside className={`ol-sidebar no-print${sidebarOpen ? '' : ' ol-sidebar--collapsed'}`}>
+        <button className="ol-sidebar-toggle" onClick={() => setSidebarOpen(o => !o)} title={sidebarOpen ? 'Réduire' : 'Ouvrir'}>
+          {sidebarOpen ? '‹' : '›'}
+        </button>
+
+        {sidebarOpen && <>
+          <div className="ol-sidebar-header">
+            <div className="ol-logo-mark">
+              <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                <polygon points="24,4 44,44 4,44" fill="#E8521A" opacity="0.2" />
+                <polygon points="24,4 44,44 4,44" fill="none" stroke="#E8521A" strokeWidth="2" />
+                <text x="24" y="34" textAnchor="middle" fill="#E8521A" fontSize="18"
+                      fontWeight="800" fontFamily="Barlow Condensed">W</text>
+              </svg>
+            </div>
+            <div>
+              <div className="ol-team-name">WILDCATS SUD</div>
+              <div className="ol-season">Moustique 2025</div>
+            </div>
           </div>
-          <div>
-            <div className="ol-team-name">WILDCATS SUD</div>
-            <div className="ol-season">Moustique 2025</div>
+
+          <div className="ol-divider" />
+
+          <div className="ol-filter-section">
+            <div className="ol-filter-label">NAVIGATION</div>
+            <button className="ol-filter-btn ol-filter-btn--active">
+              Ligne Offensive
+            </button>
+            <button className="ol-filter-btn" onClick={() => onNavigate('playbook')}>
+              Livre de Jeu
+            </button>
           </div>
-        </div>
 
-        <div className="ol-divider" />
+          <div className="ol-divider" />
 
-        <div className="ol-filter-section">
-          <div className="ol-filter-label">NAVIGATION</div>
-          <button className="ol-filter-btn" onClick={() => onNavigate('playbook')}>
-            Livre de Jeu
-          </button>
-          <button className="ol-filter-btn ol-filter-btn--active">
-            Ligne Offensive
-          </button>
-        </div>
+          <div className="ol-filter-section">
+            <div className="ol-filter-label">SECTION</div>
+            <div className="ol-section-chip">Course à l'intérieur</div>
+            <div className="ol-section-sub">{activeEntry.label} — {dirLabel}</div>
+          </div>
 
-        <div className="ol-divider" />
-
-        <div className="ol-filter-section">
-          <div className="ol-filter-label">SECTION</div>
-          <div className="ol-section-chip">Course à l'intérieur</div>
-          <div className="ol-section-sub">{activeEntry.label} — {dirLabel}</div>
-        </div>
-
-        <div className="ol-sidebar-footer">
-          <button className="ol-lock-btn" onClick={onLock}>Verrouiller</button>
-        </div>
+          <div className="ol-sidebar-footer">
+            <button className="ol-lock-btn" onClick={onLock}>Verrouiller</button>
+          </div>
+        </>}
       </aside>
 
       {/* ── Main ── */}
